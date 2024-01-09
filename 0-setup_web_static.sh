@@ -1,38 +1,26 @@
 #!/usr/bin/env bash
-# Sets up a web server for deployment of web_static.
 
-apt-get update
-apt-get install -y nginx
+# This script sets up web servers for the deployment of web_static.
 
-mkdir -p /data/web_static/releases/test/
-mkdir -p /data/web_static/shared/
-echo "Holberton School" > /data/web_static/releases/test/index.html
-ln -sf /data/web_static/releases/test/ /data/web_static/current
+if ! command -v nginx &> /dev/null; then
+  sudo apt update
+  sudo apt install nginx -y
+fi
 
-chown -R ubuntu /data/
-chgrp -R ubuntu /data/
+sudo mkdir -p /data/web_static/{releases,shared} /data/web_static/releases/test
+sudo chown -R ubuntu:ubuntu /data
 
-printf %s "server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    add_header X-Served-By $HOSTNAME;
-    root   /var/www/html;
-    index  index.html index.htm;
+sudo sh -c "echo '<html><body>Holberton School</body></html>' > /data/web_static/releases/test/index.html"
 
-    location /hbnb_static {
-        alias /data/web_static/current;
-        index index.html index.htm;
-    }
+sudo rm -rf /data/web_static/current
+sudo ln -s /data/web_static/releases/test /data/web_static/current
 
-    location /redirect_me {
-        return 301 http://cuberule.com/;
-    }
+sudo sh -c 'echo "server {
+  location /hbnb_static {
+    alias /data/web_static/current/;
+    index index.html;
+  }
+}" > /etc/nginx/sites-available/hbnb_static.conf'
+sudo ln -s /etc/nginx/sites-available/hbnb_static.conf /etc/nginx/sites-enabled/
 
-    error_page 404 /404.html;
-    location /404 {
-      root /var/www/html;
-      internal;
-    }
-}" > /etc/nginx/sites-available/default
-
-service nginx restart
+sudo systemctl restart nginx
