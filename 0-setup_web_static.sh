@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # This script sets up web servers for the deployment of web_static.
 
 if ! command -v nginx &> /dev/null; then
